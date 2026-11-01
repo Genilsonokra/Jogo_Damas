@@ -1,0 +1,63 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#171923">
+  <title>Damas Pro</title>
+<link rel="manifest" href="manifest.json">
+
+  <link rel="stylesheet" href="style.css">
+  
+</head>
+
+<body>
+  <section id="inicio" class="tela-inicial">
+    <div class="icone-jogo">♟</div>
+    <h1>DAMAS <span>PRO</span></h1>
+    <p>Estratégia, inteligência e diversão.</p>
+
+    <button id="jogar" type="button">JOGAR AGORA</button>
+
+    <p class="legenda">Jogo para dois jogadores</p>
+  </section>
+
+  <main id="partida" hidden>
+    <header>
+      <h1>♟ Damas Pro</h1>
+      <p id="status">Vez das peças vermelhas</p>
+    </header>
+
+    <div id="placar">
+      <div class="jogador vermelho">
+        <span>🔴 Vermelhas</span>
+        <strong id="placarVermelho">12</strong>
+      </div>
+
+      <div class="jogador preto">
+        <span>⚫ Pretas</span>
+        <strong id="placarPreto">12</strong>
+      </div>
+    </div>
+
+    <div id="tabuleiro" aria-label="Tabuleiro de damas"></div>
+
+    <button id="reiniciar" type="button">Nova partida</button>
+    <button id="voltar" type="button">Voltar ao início</button>
+  </main>
+
+  <script src="script.js"></script>
+  
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js")
+        .then(() => console.log("Jogo preparado para uso offline"))
+        .catch(erro => console.error("Erro no service worker:", erro));
+    });
+  }
+</script>
+
+</body>
+</html>

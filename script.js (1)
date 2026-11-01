@@ -1,0 +1,252 @@
+
+const tabuleiro = document.getElementById("tabuleiro");
+const statusJogo = document.getElementById("status");
+const botaoReiniciar = document.getElementById("reiniciar");
+
+const telaInicio = document.getElementById("inicio");
+const partida = document.getElementById("partida");
+const botaoJogar = document.getElementById("jogar");
+const botaoVoltar = document.getElementById("voltar");
+const placarVermelho = document.getElementById("placarVermelho");
+const placarPreto = document.getElementById("placarPreto");
+
+
+let casas = [];
+let selecionada = null;
+let jogadorAtual = "vermelha";
+let jogoTerminado = false;
+
+function iniciarJogo() {
+  tabuleiro.innerHTML = "";
+  casas = [];
+  selecionada = null;
+  jogadorAtual = "vermelha";
+  jogoTerminado = false;
+
+  for (let l = 0; l < 8; l++) {
+    casas[l] = [];
+
+    for (let c = 0; c < 8; c++) {
+      const casa = document.createElement("div");
+      casa.className = "casa " +
+        ((l + c) % 2 === 0 ? "clara" : "escura");
+
+      let peca = null;
+
+      if ((l + c) % 2 !== 0) {
+        if (l < 3) peca = "preta";
+        if (l > 4) peca = "vermelha";
+      }
+
+      casas[l][c] = peca
+        ? { cor: peca, dama: false }
+        : null;
+
+      casa.addEventListener("click", () => tocarCasa(l, c));
+      tabuleiro.appendChild(casa);
+    }
+  }
+
+  desenharPecas();
+  atualizarStatus();
+}
+
+function desenharPecas() {
+  for (let l = 0; l < 8; l++) {
+    for (let c = 0; c < 8; c++) {
+      const casa = tabuleiro.children[l * 8 + c];
+      casa.innerHTML = "";
+      casa.classList.remove("selecionada");
+
+      const peca = casas[l][c];
+
+      if (peca) {
+        const elemento = document.createElement("div");
+        elemento.className = "peca " + peca.cor;
+
+        if (peca.dama) {
+          elemento.textContent = "♛";
+          elemento.style.color = "#ffd700";
+          elemento.style.fontSize = "24px";
+          elemento.style.display = "flex";
+          elemento.style.alignItems = "center";
+          elemento.style.justifyContent = "center";
+        }
+
+        casa.appendChild(elemento);
+      }
+
+      if (
+        selecionada &&
+        selecionada.l === l &&
+        selecionada.c === c
+      ) {
+        casa.classList.add("selecionada");
+      }
+    }
+  }
+}
+
+function tocarCasa(l, c) {
+  if (jogoTerminado) return;
+
+  const peca = casas[l][c];
+
+  if (!selecionada) {
+    if (peca && peca.cor === jogadorAtual) {
+      selecionada = { l, c };
+      desenharPecas();
+    }
+    return;
+  }
+
+  if (peca && peca.cor === jogadorAtual) {
+    selecionada = { l, c };
+    desenharPecas();
+    return;
+  }
+
+  const ol = selecionada.l;
+  const oc = selecionada.c;
+  const origem = casas[ol][oc];
+
+  const dl = l - ol;
+  const dc = c - oc;
+  const distancia = Math.abs(dl);
+
+  const diagonal = Math.abs(dl) === Math.abs(dc);
+  const frente = jogadorAtual === "vermelha" ? -1 : 1;
+  const direcaoPermitida = origem.dama || dl * frente > 0;
+
+  const simples =
+    diagonal &&
+    distancia === 1 &&
+    casas[l][c] === null &&
+    direcaoPermitida;
+
+  let captura = false;
+
+  if (
+    diagonal &&
+    distancia === 2 &&
+    casas[l][c] === null &&
+    direcaoPermitida
+  ) {
+    const meioL = ol + dl / 2;
+    const meioC = oc + dc / 2;
+    const adversaria = casas[meioL][meioC];
+
+    if (adversaria && adversaria.cor !== jogadorAtual) {
+      captura = true;
+      casas[meioL][meioC] = null;
+    }
+  }
+
+  if (!simples && !captura) {
+    selecionada = null;
+    desenharPecas();
+    return;
+  }
+
+  casas[l][c] = origem;
+  casas[ol][oc] = null;
+
+  if (
+    (origem.cor === "vermelha" && l === 0) ||
+    (origem.cor === "preta" && l === 7)
+  ) {
+    origem.dama = true;
+  }
+
+  selecionada = null;
+
+  const vencedor = verificarVitoria();
+
+  if (vencedor) {
+    jogoTerminado = true;
+    desenharPecas();
+    statusJogo.textContent =
+      "🏆 Vitória das peças " +
+      (vencedor === "vermelha" ? "vermelhas!" : "pretas!");
+    return;
+  }
+
+  jogadorAtual =
+    jogadorAtual === "vermelha" ? "preta" : "vermelha";
+
+  desenharPecas();
+  atualizarStatus();
+}
+
+function verificarVitoria() {
+  let vermelhas = 0;
+  let pretas = 0;
+
+  for (const linha of casas) {
+    for (const peca of linha) {
+      if (!peca) continue;
+
+      if (peca.cor === "vermelha") vermelhas++;
+      if (peca.cor === "preta") pretas++;
+    }
+  }
+
+  if (vermelhas === 0) return "preta";
+  if (pretas === 0) return "vermelha";
+
+  return null;
+}
+
+function atualizarStatus() {
+  statusJogo.textContent =
+    jogadorAtual === "vermelha"
+      ? "Vez das peças vermelhas"
+      : "Vez das peças pretas";
+}
+
+botaoReiniciar.addEventListener("click", iniciarJogo);
+
+iniciarJogo();
+
+function atualizarPlacar() {
+  let vermelhas = 0;
+  let pretas = 0;
+
+  for (const linha of casas) {
+    for (const peca of linha) {
+      if (!peca) continue;
+
+      if (peca.cor === "vermelha") vermelhas++;
+      if (peca.cor === "preta") pretas++;
+    }
+  }
+
+  placarVermelho.textContent = vermelhas;
+  placarPreto.textContent = pretas;
+}
+
+const iniciarJogoOriginal = iniciarJogo;
+
+iniciarJogo = function() {
+  iniciarJogoOriginal();
+  atualizarPlacar();
+};
+
+const tocarCasaOriginal = tocarCasa;
+
+tocarCasa = function(l, c) {
+  tocarCasaOriginal(l, c);
+  atualizarPlacar();
+};
+
+botaoJogar.addEventListener("click", () => {
+  telaInicio.hidden = true;
+  partida.hidden = false;
+});
+
+botaoVoltar.addEventListener("click", () => {
+  partida.hidden = true;
+  telaInicio.hidden = false;
+});
+
+atualizarPlacar();
